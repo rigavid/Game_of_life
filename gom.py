@@ -1,6 +1,6 @@
 from Outils.cvt import *
 from Outils.cvt2 import *
-sz = [123, 257]
+sz = [100, 100]
 
 if sz[0]>sz[1]:
     max_x = 1000
@@ -90,7 +90,8 @@ while True:
         ui_im.ecris(f'Generation: {gen:0>5}', [190, 50], police=cv2.FONT_HERSHEY_COMPLEX)
         ui_im.ecris(f'Grille: {"on"if img_g else"off"}', [190, 100], police=cv2.FONT_HERSHEY_COMPLEX)
         ui_im.ecris(f'Pause: {"oui"if pause else"non"}', [190, 150], police=cv2.FONT_HERSHEY_COMPLEX)
-        ui_im.ecris(f"Size: {sz[0]*sz[1]}", [190, 500], police=cv2.FONT_HERSHEY_COMPLEX)
+        ui_im.ecris(f"Size: {sz[0]}x{sz[1]}", [190, 475], police=cv2.FONT_HERSHEY_COMPLEX)
+        ui_im.ecris(f"Size: {sz[0]*sz[1]}", [190, 525], police=cv2.FONT_HERSHEY_COMPLEX)
         now = time.time()
         ui_im.ecris(f'{f"{1/diff(last,now):f}" if diff(last,now)>0.07 else f"{round(1/diff(last,now+0.000001)):0>3}"} FPS', [190, 920], police=cv2.FONT_HERSHEY_COMPLEX)
         ui_im.ecris(f'{diff(last,now):f} SPF', [190, 970], police=cv2.FONT_HERSHEY_COMPLEX)
