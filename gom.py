@@ -65,8 +65,8 @@ while True:
     while True:
         if ps.pos != [0,0]:
             pos = ps.pos; ps.pos=[0,0]
-            x = round(pos[0]/(max_x/sz[0]))
-            y = round(pos[1]/(max_y/sz[1]))
+            x = round((pos[0]-(max_x/sz[0])/2)/(max_x/sz[0]))
+            y = round((pos[1]-(max_y/sz[1])/2)/(max_y/sz[1]))
             grille[x,y]=1 if grille[x,y]==0 else 0
         if img_g:
             img = copy.deepcopy(img_life_g)
