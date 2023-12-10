@@ -37,7 +37,10 @@ if sz[0] <= 350 or sz[1] <= 350:
             img_life_g.rectangle([x, y], [x+max_x/sz[0], y+max_y/sz[1]], col.new('202020'), 1)
 jeu = ly.frame(img=copy.deepcopy(img_life), pos=[(1920-max_x)/2, 40])
 ui_img = image(img=image.new_img(dimensions=[380, 1000], fond=col.new('aaaaaa')))
+img_UI = copy.deepcopy(ui_img)
+img_UI.ecris('Backspace: Clear\n\n\nSpace: Grid\n\n\nr: Reset\n\n\nEnter: Pause\n\n\nEscape: Quit', [190, 500], police=cv2.FONT_HERSHEY_COMPLEX)
 ui = ly.frame(img=copy.deepcopy(ui_img), pos=[40,40])
+UI = ly.frame(img=img_UI, pos=[1500, 40])
 
 voisins = [[-1, -1], [0, -1], [1, -1],
            [-1, 0], [1, 0],
@@ -99,13 +102,11 @@ while True:
         img = ly.montre(True, col_dbg=col.new('202020'), attente=0)
         wk = souris_sur_image(img.img, souris, attente=1, destroy=non)
         match wk:
-            case 27: raise SystemExit
-            case 13: pause = not pause
-            case 8: grille = np.full(sz,0,np.int8); pause=True; gen=0
-            case 32: img_g = not img_g
             case 114: break
-            case -1: pass
-            case _: print(wk)
+            case  32: img_g = not img_g
+            case  27: raise SystemExit
+            case  13: pause = not pause
+            case   8: grille = np.full(sz,0,np.int8); pause=True; gen=0
         if not pause:
             last = time.time()
             grille2 = np.full(sz, 0, np.int8)
