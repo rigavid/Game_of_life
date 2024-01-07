@@ -1,5 +1,6 @@
 from Outils.cvt import *
 from Outils.cvt2 import *
+import PySimpleGUI as sg
 sz = [100, 100]
 
 if sz[0]>sz[1]:
@@ -45,6 +46,23 @@ UI = ly.frame(img=img_UI, pos=[1500, 40])
 voisins = [[-1, -1], [0, -1], [1, -1],
            [-1, 0], [1, 0],
            [-1, 1], [0, 1], [1, 1]]
+
+def resize(sz, grille):
+    try:
+        s = eval(sg.popup_get_text('Écrire deux nombres séparés par une virgule'))
+        print(s)
+        if len(s) != 2: print('LEN ERROR');raise Exception
+        for t in [type(v) for v in s]:
+            if t != int: print('TYPE ERROR');raise Exception
+        try: return s, grille[0,s[0]:0,s[1]:]
+        except:
+            g = np.full(s,0,np.int8)
+            return s, g
+    except Exception as e:
+        print(e)
+        return sz, grille
+        
+    
 
 def count_vsns(grille, pos) -> int:
     x, y = pos
@@ -107,12 +125,24 @@ while True:
             case  27: raise SystemExit
             case  13: pause = not pause
             case   8: grille = np.full(sz,0,np.int8); pause=True; gen=0
+            case 115:
+                sz, grille = resize(sz, grille)
+                if sz[0] <= 350 and sz[1] <= 350:
+                    for x in range2(0, max_x, max_x/sz[0]):
+                        for y in range2(0, max_y, max_y/sz[1]):
+                            img_life_g.rectangle([x, y], [x+max_x/sz[0], y+max_y/sz[1]], col.new('202020'), 1)
+                else: img_life_g = copy.deepcopy(img_life)
         if not pause:
             last = time.time()
             grille2 = np.full(sz, 0, np.int8)
             for x in range(sz[0]):
                 for y in range(sz[1]):
-                    p = grille[x, y] == 1
+                    try: p = grille[x, y] == 1
+                    except Exception as e:
+                        print(sz)
+                        print(f'{len(grille),len(grille[0])}')
+                        print(x, y)
+                        raise e
                     n = count_vsns(grille, [x, y])
                     if p:
                         if n in [2, 3]:
