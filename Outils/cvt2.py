@@ -74,7 +74,10 @@ class image:
             mn_y, mx_y, st_y = len(self.img[0])-1, -1, -1
         for x in range(mn_x, mx_x, st_x):
             for y in range(mn_y, mx_y, st_y):
-                b, g, r = self.img[x, y]
+                try: b, g, r = self.img[x, y]
+                except:
+                    input(self.img[x, y])
+                    b = g = r = sum(self.img[x, y])/3
                 fg.custom = Style(RgbFg(r, g, b))
                 img_str += f'{fg.custom}██'
                 n += 1
