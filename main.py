@@ -34,13 +34,15 @@ def format_time(s):
     ts += f"{s}s"
     return ts
 
-
 class GameOfLife:
+    def random_fill(self):
+        return np.random.randint(0, 2, (self.size, self.size), dtype=np.int8)
+
     def __init__(self, size):
         self.min_size = 100
         self.max_size = RES.resolution[1]
         self.size = min(max(size, self.min_size), self.max_size)
-        self.m = np.random.randint(0, 2, (self.size, self.size), dtype=np.int8)
+        self.m = self.random_fill()
         self.cells = new_img((self.size, self.size))
         self.img = new_img(name="Game of Life")
         self.last = 0
@@ -56,10 +58,11 @@ class GameOfLife:
         prsT, prs = (COL.black, 3, 6, 0, 2, True), (COL.black, 2, 4, 0, 2, False)
         self.img.text(f"^UL^Stats^UL^", [x/2, 100], *prsT)
         start = 200
+        fps = 1/(time.time()-self.last)
         ## Write infos ##
         texts = [
             f"  Gen. : {self.gen:,}",
-            f"  Time : {format_time(time.time()-self.first)}",
+            f"  Time : {format_time(time.time()-self.first if not self.pause else self.paused_time-self.first)}",
             f"En vie : {alive:,}",
             f"Mortes : {dead:,}",
             f" Total : {t:,}",
@@ -67,7 +70,8 @@ class GameOfLife:
             f" Ratio : {dead /t*100:0>5.2f}% Mor.",
             f"  Size : {self.m.shape[0]} cases",
             f"  Size : {self.cells.size()[0]} px",
-            f"   FPS : {1/(time.time()-self.last):.2f}",
+            f"   FPS : {fps:.2f}",
+            f"Calc/s : {round(t*fps):,}",
         ]
         for t in texts:
             self.img.text(t, [x/2-200, start], *prs)
@@ -96,45 +100,45 @@ class GameOfLife:
         self.gen += 1
         self.image()
 
+    def resize(self, size):
+        if self.max_size>=size>=self.min_size:
+            if size<=self.m.shape[0]:
+                self.m = self.m[0:size, 0:size]
+            else:
+                while self.m.shape[0]<size:
+                    self.m = np.hstack([self.m, np.zeros((self.m.shape[0], 1), dtype=self.m.dtype)])
+                    self.m = np.vstack([self.m, np.zeros((1, self.m.shape[1]), dtype=self.m.dtype)])
+
     def start(self):
-        self.gen, self.first = 0, time.time()
+        self.gen, self.first, self.pause = 0, time.time(), False
         self.image()
         self.img.build()
-        pause = False
         while self.img.is_opened():
             wk = self.img.show()
             match wk:
                 case 114:## R ##
-                    self.m = np.random.randint(0, 2, (self.m.shape), dtype=np.int8)
+                    self.m = self.random_fill()
                     self.gen, self.first = 0, time.time()
                     self.image()
                     self.img.show()
                 case 45: ## - ##
-                    if self.m.shape[0]>self.min_size and self.m.shape[1]>self.min_size:
-                        self.m = self.m[0:-1, 0:-1]
-                        if pause:
-                            self.image()
-                            self.img.show()
+                    self.resize(self.m.shape[0]-1)
                 case 43: ## + ##
-                    if self.m.shape[0]<self.max_size and self.m.shape[1]<self.max_size:
-                        self.m = np.hstack([self.m, np.zeros((self.m.shape[0], 1), dtype=self.m.dtype)])
-                        self.m = np.vstack([self.m, np.zeros((1, self.m.shape[1]), dtype=self.m.dtype)])
-                        if pause:
-                            self.image()
-                            self.img.show()
+                    self.resize(self.m.shape[0]+1)
                 case 112:## P ##
-                    if not pause: self.paused_time = time.time()
+                    if not self.pause: self.paused_time = time.time()
                     else: self.first += time.time() - self.paused_time
-                    pause = not pause
+                    self.pause = not self.pause
                 case 115:## S ##
-                    s = ask_num()
-                    if s>=self.min_size and s<=self.max_size:
-                        if s<=self.m.shape[0]: self.m = self.m[0:s, 0:s]
-                        else:
-                            while self.m.shape[0]<s:
-                                self.m = np.hstack([self.m, np.zeros((self.m.shape[0], 1), dtype=self.m.dtype)])
-                                self.m = np.vstack([self.m, np.zeros((1, self.m.shape[1]), dtype=self.m.dtype)])
-            if pause: continue
+                    self.resize(ask_num())
+                case 8: ## Backspace ##
+                    RES.update()
+                    if self.m.shape[1] < RES.resolution[1]:
+                        self.resize(RES.resolution[1])
+                    self.img.img = new_img().img
+            if self.pause:
+                self.image()
+                continue
             self.update()
 
 if __name__ == "__main__":
