@@ -1,8 +1,9 @@
-from scipy.signal import convolve2d
 from tkinter import simpledialog
 from pyimager import *
+from numba import njit
 import tkinter as tk
 import numpy as np
+import datetime
 import time
 
 def ask_num():
@@ -11,11 +12,28 @@ def ask_num():
     n = simpledialog.askinteger("[Set size]", "Enter number: ")
     return n if n is not None else 0
 
-get_voisins = lambda m: convolve2d(m, np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]]), mode='same', boundary='wrap')
+@njit
+def get_voisins(m):
+    rows, cols = m.shape
+    voisins = np.zeros_like(m)
+    for i in range(1, rows-1):
+        for j in range(1, cols-1):
+            voisins[i, j] = (m[i-1, j-1] + m[i-1, j] + m[i-1, j+1] + m[i, j-1] + m[i, j+1] + m[i+1, j-1] + m[i+1, j] + m[i+1, j+1])
+    return voisins
 
+@njit
 def update_cells(m):
     voisins = get_voisins(m)
-    return np.where((m == 1) & ((voisins == 2) | (voisins == 3)), 1, 0) | (m == 0) & (voisins == 3)
+    return np.where((m == 1) & ((voisins < 2) | (voisins > 3)), 0, m) | np.where((m == 0) & (voisins == 3), 1, 0)
+
+def format_time(s):
+    h, m, s = int(s // 3600), int((s % 3600) // 60), int(s % 60)
+    ts = ""
+    if h > 0: ts += f"{h}h"
+    if m > 0 or h > 0: ts += f"{m}m"
+    ts += f"{s}s"
+    return ts
+
 
 class GameOfLife:
     def __init__(self, size):
@@ -33,15 +51,15 @@ class GameOfLife:
         x, y = (s1[0]-s2[0])//2, (s1[1]-s2[1])//2
         ## Clear infos ##
         self.img.rectangle([0, 0], RES.resolution, COL.white, 0)
-        ## Write infos ##
-        alive, dead = np.sum(self.m == 1), np.sum(self.m == 0)
-        t = np.sum(self.m != 2)
-        prsT = (COL.black, 3, 6, 0, 2, True)
-        prs = (COL.black, 2, 4, 0, 2, False)
+        ## Vars for infos ##
+        alive, dead, t = np.sum(self.m == 1), np.sum(self.m == 0), np.sum(self.m != 2)
+        prsT, prs = (COL.black, 3, 6, 0, 2, True), (COL.black, 2, 4, 0, 2, False)
         self.img.text(f"^UL^Stats^UL^", [x/2, 100], *prsT)
         start = 200
+        ## Write infos ##
         texts = [
             f"  Gen. : {self.gen:,}",
+            f"  Time : {format_time(time.time()-self.first)}",
             f"En vie : {alive:,}",
             f"Mortes : {dead:,}",
             f" Total : {t:,}",
@@ -73,14 +91,13 @@ class GameOfLife:
         self.img.img[y:y+s2[1], x:x+s2[0]] = self.cells.img
         self.last = time.time()
 
-
     def update(self):
         self.m = update_cells(self.m)
         self.gen += 1
         self.image()
 
     def start(self):
-        self.gen = 0
+        self.gen, self.first = 0, time.time()
         self.image()
         self.img.build()
         pause = False
@@ -89,7 +106,7 @@ class GameOfLife:
             match wk:
                 case 114:## R ##
                     self.m = np.random.randint(0, 2, (self.m.shape), dtype=np.int8)
-                    self.gen = 0
+                    self.gen, self.first = 0, time.time()
                     self.image()
                     self.img.show()
                 case 45: ## - ##
@@ -106,6 +123,8 @@ class GameOfLife:
                             self.image()
                             self.img.show()
                 case 112:## P ##
+                    if not pause: self.paused_time = time.time()
+                    else: self.first += time.time() - self.paused_time
                     pause = not pause
                 case 115:## S ##
                     s = ask_num()
@@ -118,5 +137,6 @@ class GameOfLife:
             if pause: continue
             self.update()
 
-game = GameOfLife(RES.resolution[1])
-game.start()
+if __name__ == "__main__":
+    game = GameOfLife(RES.resolution[1])
+    game.start()
