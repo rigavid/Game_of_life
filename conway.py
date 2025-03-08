@@ -1,14 +1,11 @@
 from tkinter import simpledialog
 from pyimager import *
 from numba import njit
-import tkinter as tk
 import numpy as np
 import datetime
 import time
 
 def ask_num():
-    root = tk.Tk()
-    root.withdraw()
     n = simpledialog.askinteger("[Set size]", "Enter number: ")
     return n if n is not None else 0
 
@@ -54,7 +51,7 @@ class GameOfLife:
         ## Clear infos ##
         self.img.rectangle([0, 0], RES.resolution, COL.white, 0)
         ## Vars for infos ##
-        alive, dead, t = np.sum(self.m == 1), np.sum(self.m == 0), np.sum(self.m != 2)
+        alive, dead, t = np.sum(self.m == 1), np.sum(self.m == 0), self.m.size
         prsT, prs = (COL.black, 3, 6, 0, 2, True), (COL.black, 2, 4, 0, 2, False)
         self.img.text(f"^UL^Stats^UL^", [x/2, 100], *prsT)
         start = 200
@@ -102,6 +99,7 @@ class GameOfLife:
 
     def resize(self, size):
         if self.max_size>=size>=self.min_size:
+            self.size = size
             if size<=self.m.shape[0]:
                 self.m = self.m[0:size, 0:size]
             else:
@@ -131,11 +129,6 @@ class GameOfLife:
                     self.pause = not self.pause
                 case 115:## S ##
                     self.resize(ask_num())
-                case 8: ## Backspace ##
-                    RES.update()
-                    if self.m.shape[1] < RES.resolution[1]:
-                        self.resize(RES.resolution[1])
-                    self.img.img = new_img().img
             if self.pause:
                 self.image()
                 continue
