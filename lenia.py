@@ -92,7 +92,7 @@ class Lenia:
             f"  MGPS : {self.gen/t:.2f}",
             f"   FPS : {fps:.2f}",
             f" Calcs : {self.m.size*self.kernel.size:,}",
-            f"C/S : {int(self.m.size*fps*self.kernel.size):,}",
+            f"C/S : {int(self.m.size*fps*self.kernel.size) if not self.pause else 0:,}",
         ]
         for t in texts:
             self.img.text(t, [x/2-200, start], *prs)
