@@ -1,14 +1,23 @@
 from scipy.signal import fftconvolve
-from tkinter import simpledialog
+try: from tkinter import simpledialog
+except: pass
 import matplotlib.pyplot as plt
 from pyimager import *
 import numpy as np
 import time
 
-def ask_num(int=True):
-    n = simpledialog.askfloat("[Set size]", "Enter number: ")
-    if int and n!=None: n=round(n)
-    return n if n is not None else 0
+def ask_num(integer=True):
+    try:
+        n = simpledialog.askfloat("[Set size]", "Enter number: ")
+        if integer and n!=None: n=round(n)
+        return n if n is not None else 0
+    except:
+        try:
+            n = float(input("Size: "))
+            if integer: n = round(n)
+            return n
+        except: pass
+    return 0
 
 def custom_convolve(m, kernel):
     pad_y, pad_x = kernel.shape[0]//2, kernel.shape[1]//2
