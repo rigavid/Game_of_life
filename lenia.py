@@ -20,8 +20,7 @@ def ask_num(integer=True):
     return 0
 
 def custom_convolve(m, kernel):
-    pad_y, pad_x = kernel.shape[0]//2, kernel.shape[1]//2
-    result = fftconvolve(np.pad(m, ((pad_y, pad_y), (pad_x, pad_x)), mode='wrap'), kernel, mode='same')
+    result = fftconvolve(np.pad(m, ((pad_y:=kernel.shape[0]//2, pad_y), (pad_x:=kernel.shape[1]//2, pad_x)), mode='wrap'), kernel, mode='same')
     return result[pad_y:pad_y + m.shape[1], pad_x:pad_x + m.shape[0]]
 
 class glob:
@@ -36,18 +35,11 @@ def growth_function(x):
     return -1 + 2 * np.exp(-((x - glob.mu) ** 2) / (2 * glob.sigma ** 2))
 
 def update_cells(m, kernel, dt=0.1, *args, **kwargs):
-    conv = custom_convolve(m, kernel)/100
-    return np.clip(m + dt * growth_function(conv), 0, 1)
+    return np.clip(m + dt * growth_function(custom_convolve(m, kernel)/100), 0, 1)
 
-def changeR(val):
-    glob.new = "R"
-    glob.val = val
-def changeMu(val):
-    glob.new = "M"
-    glob.val = val/glob.mu_
-def changeSigma(val):
-    glob.new = "S"
-    glob.val = val/glob.sigma_
+def changeR(val): glob.new, glob.val = "R", val
+def changeMu(val): glob.new, glob.val = "M", val/glob.mu_
+def changeSigma(val): glob.new, glob.val = "S", val/glob.sigma_
 
 class Lenia:
     def generate_kernel(self):
@@ -62,14 +54,12 @@ class Lenia:
         return np.random.rand(self.size, self.size)
 
     def __init__(self, size):
-        self.min_size = 100
-        self.max_size = RES.resolution[1]
+        self.min_size, self.max_size = 100, RES.resolution[1]
         self.size = min(max(size, self.min_size), self.max_size)
         self.m = self.get_rd_m()
         self.cells, self.img = new_img((self.size, self.size)), new_img(name="Lenia")
         self.last, self.gen, self.first, self.pause = 0, 0, time.time(), False
-        self.R, self.mu, self.sigma, self.dt = 13, 0.5, 0.15, 0.1
-        self.rings = [1]
+        self.R, self.mu, self.sigma, self.dt, self.rings = 13, 0.5, 0.15, 0.1, [1, 3]
         self.kernel = self.generate_kernel()
 
     def image(self):
@@ -90,14 +80,12 @@ class Lenia:
         texts = [
             f"  Gen. : {self.gen:,}",
             f"  Time : {t:.2f}s",
-            f"  Size : {self.m.shape[0]} cases",
-            "",
+            f"  Size : {self.m.shape[0]} cases", "",
             f"En vie : {alive:,}",
             f"Mortes : {dead:,}",
             f" Ratio : {alive/self.m.size*100:0>5.2f}% Viv.",
             f" Ratio : {dead/self.m.size*100:0>5.2f}% Mor.",
-            f" Total : {self.m.size:,}",
-            "",
+            f" Total : {self.m.size:,}", "",
             f"  MGPS : {self.gen/t:.2f}",
             f"   FPS : {fps:.2f}",
             f" Calcs : {self.m.size*self.kernel.size:,}",
@@ -109,36 +97,21 @@ class Lenia:
         ## Write help ##
         self.img.text(f"^UL^Commands^UL^", [RES.resolution[0]-x/2, 50], *prsT)
         start = 150
-        texts = [
-            f"R to start randomly",
-            f"P to pause simul.",
-            f"S to set grid size",
-            f"I to show kernel",
-            f"K to modify kernel",
-        ]
+        texts = [ f"R to start randomly", f"P to pause simul.", f"S to set grid size", f"I to show kernel", f"K to modify kernel"]
         for t in texts:
             self.img.text(t, [RES.resolution[0]-x/2-180, start], *prs)
             start += 50
         ## Write behaviour info ##
         self.img.text(f"^UL^Behaviour^UL^", [x/2, RES.resolution[1]/2+350], *prsT)
         start = RES.resolution[1]/2+400
-        texts = [
-            f" ^B87^ : {glob.sigma}",
-            f" ^B81^ : {glob.mu}",
-        ]
+        texts = [ f" ^B87^ : {glob.sigma}", f" ^B81^ : {glob.mu}" ]
         for t in texts:
             self.img.text(t, [x/2-200, start], *prs)
             start += 50
         ## Write kernel info ##
         self.img.text(f"^UL^Kernel^UL^", [RES.resolution[0]-x/2, RES.resolution[1]/2+150], *prsT)
         start = RES.resolution[1]/2+200
-        texts = [
-            f" R : {self.R}",
-            f" X : ",
-            f" Y : ",
-            f" ^B87^ : {self.sigma}",
-            f" ^B81^ : {self.mu}",
-        ]
+        texts = [ f" R : {self.R}", f" X : ", f" Y : ", f" ^B87^ : {self.sigma}", f" ^B81^ : {self.mu}" ]
         for t in texts:
             self.img.text(t, [RES.resolution[0]-x/2-180, start], *prs)
             start += 50
@@ -224,8 +197,7 @@ class Lenia:
                                 r = []
                                 for i in range(n):
                                     n2 = ask_num(False)
-                                    if 1>=(n2)>0 and n2!=None:
-                                        r.append(n2)
+                                    if 1>=(n2)>0 and n2!=None: r.append(n2)
                                 self.rings = r
                                 self.kernel = self.generate_kernel()
                                 ki.img = self.kernel_img()
@@ -238,4 +210,3 @@ class Lenia:
 if __name__ == "__main__":
     game = Lenia(RES.resolution[1])
     game.start()
-    # print(game.kernel)
