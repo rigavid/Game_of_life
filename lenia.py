@@ -59,7 +59,7 @@ class Lenia:
         self.m = self.get_rd_m()
         self.cells, self.img = new_img((self.size, self.size)), new_img(name="Lenia")
         self.last, self.gen, self.first, self.pause = 0, 0, time.time(), False
-        self.R, self.mu, self.sigma, self.dt, self.rings = 13, 0.5, 0.15, 0.1, [1, 3]
+        self.R, self.mu, self.sigma, self.dt, self.rings = 13, 0.5, 0.15, 0.1, [1]
         self.kernel = self.generate_kernel()
 
     def image(self):

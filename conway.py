@@ -1,13 +1,23 @@
-from tkinter import simpledialog
+try: from tkinter import simpledialog
+except: pass
 from pyimager import *
 from numba import njit
 import numpy as np
 import datetime
 import time
 
-def ask_num():
-    n = simpledialog.askinteger("[Set size]", "Enter number: ")
-    return n if n is not None else 0
+def ask_num(integer=True):
+    try:
+        n = simpledialog.askfloat("[Set size]", "Enter number: ")
+        if integer and n!=None: n=round(n)
+        return n if n is not None else 0
+    except:
+        try:
+            n = float(input("Size: "))
+            if integer: n = round(n)
+            return n
+        except: pass
+    return 0
 
 @njit
 def get_voisins(m):
@@ -33,7 +43,7 @@ def format_time(s):
 
 class GameOfLife:
     def random_fill(self):
-        return np.random.randint(0, 2, (self.size, self.size), dtype=np.int8)
+        return np.random.randint(0, 2, (self.size, self.size), dtype=np.int16)
 
     def __init__(self, size):
         self.min_size = 100
